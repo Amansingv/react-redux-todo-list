@@ -229,8 +229,8 @@ function TodoList() {
                     <div
                       className={`${
                         todo.completed
-                          ? "line-through text-greenTeal"
-                          : "text-zinc-800"
+                          ? "line-through text-greenTeal cursor-pointer"
+                          : "text-zinc-800 cursor-pointer"
                       }`}
                       onClick={() => {
                         handleToggleCompleted(todo.id);
