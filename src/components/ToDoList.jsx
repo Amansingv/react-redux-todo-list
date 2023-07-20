@@ -24,11 +24,10 @@ function TodoList() {
   const todoList = useSelector((state) => state.todo.todoList);
   const sortCriteria = useSelector((state) => state.todo.sortCriteria);
   const [showModal, setShowModal] = useState(false);
-  const [currentTodo, setCurrentTodo] = useState(null);
-  const [newTask, setNewTask] = useState("");
 
   const [mode, setMode] = useState("add");
   const [id, setId] = useState(null);
+  const [search, setSearch] = useState("");
 
   const {
     register,
@@ -48,6 +47,7 @@ function TodoList() {
       handleUpdateToDoList(id, data.todo, data.date);
     }
     setShowModal(false);
+    setMode("add");
     setValue("todo", "");
     reset();
   };
@@ -57,6 +57,7 @@ function TodoList() {
       localStorage.setItem("todoList", JSON.stringify(todoList));
     }
   }, [todoList]);
+
   useEffect(() => {
     const localTodoList = JSON.parse(localStorage.getItem("todoList"));
     if (localTodoList) {
@@ -64,13 +65,11 @@ function TodoList() {
     }
   }, []);
 
-
   const handleAddTodo = (task, date) => {
     if (task.trim().length === 0) {
       alert("Please enter a task");
     } else {
       dispatch(addTodo({ task: task, id: Date.now(), date: date }));
-      setNewTask("");
       setShowModal(true);
     }
   };
@@ -106,31 +105,48 @@ function TodoList() {
     return currentDate;
   }
 
-  const sortToDoList = todoList.filter((todo) => {
-    if (sortCriteria === "All") return true;
-    if (sortCriteria === "Completed" && todo.completed) return true;
-    if (
-      sortCriteria === "Not Completed" &&
-      !todo.completed &&
-      new Date(getCurrentDate()) < new Date(todo.date)
-    )
-      return true;
-    if (
-      sortCriteria === "overdue" &&
-      new Date(getCurrentDate()) > new Date(todo.date)
-    )
-      return true;
-    return false;
-  });
+  const sortToDoList = todoList
+    .filter((todo) => {
+      if (sortCriteria === "All") return true;
+      if (sortCriteria === "Completed" && todo.completed) return true;
+      if (
+        sortCriteria === "Not Completed" &&
+        !todo.completed &&
+        new Date(getCurrentDate()) < new Date(todo.date)
+      )
+        return true;
+      if (
+        sortCriteria === "overdue" &&
+        new Date(getCurrentDate()) > new Date(todo.date)
+      )
+        return true;
+      return false;
+    })
+    .filter((todo) => {
+      if (search !== "") {
+        return todo.task.toLowerCase().includes(search.toLowerCase());
+      } else return true;
+    });
 
   const handleToggleCompleted = (id) => {
     dispatch(toggleCompleted({ id }));
   };
+
+  console.log("serch: ", search);
+  console.log("sort todo list; ", sortToDoList);
+
+  const handleSearch = (value) => {
+    const timer = setTimeout(() => {
+      setSearch(value);
+    }, 500);
+    return () => clearTimeout(timer);
+  };
+
   return (
     <div>
       <div className="text-center text-4xl font-bold">Todo List</div>
       {showModal && (
-        <div className="fixed w-full left-0 top-0 h-full bg-transparentBlack flex items-center justify-center">
+        <div className="fixed w-full left-0 top-0 h-full bg-transparentBlack z-10 flex items-center justify-center">
           <div className="bg-white p-6 rounded-md w-full max-w-xl">
             <div className="flex justify-end items-center">
               <span
@@ -154,10 +170,8 @@ function TodoList() {
                   id="todo"
                   name="todo"
                   className="border p-2 rounded-md mt-1 outline-none w-full"
-                  value={newTask}
-                  onChange={(e) => setNewTask(e.target.value)}
                   placeholder={
-                    currentTodo
+                    mode === "edit"
                       ? "Update your task here"
                       : "Enter your task here"
                   }
@@ -184,7 +198,7 @@ function TodoList() {
                   type="submit"
                   className="bg-blue-600 hover:bg-blue-500 text-white duration-150 px-3 py-1.5 rounded-md"
                 >
-                  Submit
+                  {mode === "add" ? "Submit" : "Update"}
                 </button>
               </div>
             </form>
@@ -200,10 +214,46 @@ function TodoList() {
           </div>
         ) : (
           <div className="container mx-auto mt-6">
-            <div className="flex justify-center mb-6 ">
+            <div className="flex justify-center gap-6 mb-6 mx-auto w-full md:w-[75%]">
+              <div className="w-full">
+                <label
+                  htmlFor="default-search"
+                  className="mb-2 text-sm font-medium text-gray-900 sr-only"
+                >
+                  Search
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <svg
+                      className="w-4 h-4 text-gray-500"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    type="search"
+                    id="default-search"
+                    className="block w-full p-4 pl-10 outline-none text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 "
+                    placeholder="Search..."
+                    required
+                    onChange={(e) => handleSearch(e.target.value)}
+                  />
+                </div>
+              </div>
+
               <select
                 onChange={(e) => handleSort(e.target.value)}
-                className=" outline-none text-sm border border-zinc-400 rounded-md px-4 py-2"
+                className=" outline-none text-sm border border-gray-300 bg-gray-50 rounded-md px-4 py-2"
               >
                 <option value="All" className="text-sm">
                   All
@@ -220,6 +270,7 @@ function TodoList() {
               </select>
             </div>
             <div>
+              {sortToDoList.length === 0 && <div className="flex justify-start items-center mb-4 text-zinc-600">There are no tasks matching your search input and filter....</div>}
               {sortToDoList.map((todo) => (
                 <div
                   key={todo.id}
