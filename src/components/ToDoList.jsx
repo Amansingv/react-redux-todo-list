@@ -250,7 +250,6 @@ function TodoList() {
                   />
                 </div>
               </div>
-
               <select
                 onChange={(e) => handleSort(e.target.value)}
                 className=" outline-none text-sm border border-gray-300 bg-gray-50 rounded-md px-4 py-2"
