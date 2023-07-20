@@ -5,7 +5,7 @@
 ### Todo Modal
 ![Alt text](/public/add-todo-modal.png)
 ### After adding todo
-![Alt text](/public/added-todo.png)
+![Alt text](/public/todo-added.png)
 ### Todo marked completed
 Todo is marked completed on clicking on the todo
 ![Alt text](/public/completed-todo.png)
